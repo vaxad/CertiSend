@@ -7,8 +7,8 @@ export default function Home() {
   return (
     <main className=" flex flex-col justify-center px-6 md:px-20 flex-grow min-h-[90vh]">
       <h1 className=" text-6xl font-black pb-4">CertiSend</h1>
-      <p className=" text-2xl font-medium pb-12">Automate the creation of fully functional REST APIs for your database models, including CRUD operations, optional authentication, and Prisma ORM integration.</p>
-      <Link href="/create" className={cn(buttonVariants({
+      <p className=" text-2xl font-medium pb-12">Automate the creation and sending of customized emails with certificates/images.</p>
+      <Link href="/send" className={cn(buttonVariants({
         variant: "outline"
       }), " text-2xl py-8 px-6 font-semibold bg-transparent hover:bg-foreground hover:text-background")}>Try it out!</Link>
       <div className="h-full w-full justify-center items-center flex pt-24">

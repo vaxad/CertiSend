@@ -30,7 +30,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Toaster />
-          <div className="w-full h-full min-h-screen flex flex-col max-w-7xl z-50 pb-12 mx-auto">
+          <div className="w-full h-full min-h-screen flex flex-col max-w-7xl z-50 pb-12 mx-auto px-6">
             <Navbar />
             {children}
           </div>

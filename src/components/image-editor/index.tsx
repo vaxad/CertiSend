@@ -1,34 +1,18 @@
-import { useState, useRef, useEffect } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useRef } from 'react';
 import Draggable from 'react-draggable';
 import * as htmlToImage from 'html-to-image';
-import FormComponent from './form';
+import { ImageEditorProps, TextPosition } from '@/lib/types/image';
+import { Input } from '../ui/input';
+import { Button } from '../ui/button';
+import { Plus } from 'lucide-react';
+import { Label } from '../ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
-interface Props {
-    columns: string[];
-    tableData: { [key: string]: string }[];
-}
-
-export interface TextPosition {
-    id: number;
-    column: string;
-    x: number;
-    y: number;
-    color: string;
-    backgroundColor: string;
-    fontSize: number;
-    fontWeight: string;
-    fontStyle: string;
-    fontFamily: string;
-}
-
-const ImageOverlay: React.FC<Props> = ({ columns, tableData }) => {
-    const [image, setImage] = useState<string | null>(null);
-    const [textPositions, setTextPositions] = useState<TextPosition[]>([]);
+const ImageEditor = ({ columns, tableData, image, imageRef, setImage, setTextPositions, textPositions }: ImageEditorProps) => {
     const [customFontName, setCustomFontName] = useState<string | null>(null);
-    const imageRef = useRef<HTMLDivElement>(null);
     const styleSheetRef = useRef<HTMLStyleElement | null>(null);
 
-    // Handle image upload
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files?.[0]) {
             const reader = new FileReader();
@@ -39,7 +23,6 @@ const ImageOverlay: React.FC<Props> = ({ columns, tableData }) => {
         }
     };
 
-    // Handle custom font upload and generate a base64 string
     const handleFontUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files?.[0]) {
             const reader = new FileReader();
@@ -48,14 +31,12 @@ const ImageOverlay: React.FC<Props> = ({ columns, tableData }) => {
             reader.onload = (event: any) => {
                 const fontBase64 = event.target.result;
 
-                // Create or update a style element for the uploaded font
                 if (!styleSheetRef.current) {
                     const styleSheet = document.createElement('style');
                     document.head.appendChild(styleSheet);
                     styleSheetRef.current = styleSheet;
                 }
 
-                // Insert a new @font-face rule for the uploaded font
                 const styleSheet = styleSheetRef.current!;
                 styleSheet.innerHTML = `
           @font-face {
@@ -69,7 +50,6 @@ const ImageOverlay: React.FC<Props> = ({ columns, tableData }) => {
         }
     };
 
-    // Add new text position to the image
     const addText = (column: string) => {
         setTextPositions([
             ...textPositions,
@@ -83,19 +63,17 @@ const ImageOverlay: React.FC<Props> = ({ columns, tableData }) => {
                 fontSize: 16,
                 fontWeight: 'normal',
                 fontStyle: 'normal',
-                fontFamily: 'Arial', // Default font
+                fontFamily: 'Arial',
             },
         ]);
     };
 
-    // Update text position (dragging, size, style, etc.)
     const updateTextPosition = (id: number, updates: Partial<TextPosition>) => {
         setTextPositions((prev) =>
             prev.map((text) => (text.id === id ? { ...text, ...updates } : text))
         );
     };
 
-    // Export images with table data
     const handleExport = async () => {
         if (!imageRef.current) return;
 
@@ -105,16 +83,12 @@ const ImageOverlay: React.FC<Props> = ({ columns, tableData }) => {
                 column: row[text.column],
             }));
 
-            // Temporarily set the updated text positions to display actual data
             setTextPositions(updatedTextPositions);
 
-            // Export image with replaced data
             const dataUrl = await htmlToImage.toPng(imageRef.current);
 
-            // Reset the text positions to placeholders for next iteration
             setTextPositions(textPositions);
 
-            // You can display the generated image or download it
             const link = document.createElement('a');
             link.href = dataUrl;
             link.download = `image-${row.email}.png`;
@@ -124,133 +98,162 @@ const ImageOverlay: React.FC<Props> = ({ columns, tableData }) => {
 
     return (
         <div>
-            <h2>Image Upload and Text Placement</h2>
-            <input type="file" accept="image/*" onChange={handleImageUpload} />
-
-            <div style={{ marginTop: '20px' }}>
-                <h3>Place columns on the image</h3>
-                {columns.map((column, index) => (
-                    <button key={index} onClick={() => addText(column)}>
-                        Add {column}
-                    </button>
-                ))}
-            </div>
-
-            <div style={{ marginTop: '20px' }}>
-                <h3>Upload Custom Font</h3>
-                <input type="file" accept=".ttf,.otf,.woff" onChange={handleFontUpload} />
-            </div>
+            <h2 className='text-xl font-semibold pb-4'>Image Upload and Text Placement</h2>
+            <Input className='w-fit' type="file" accept="image/*" onChange={handleImageUpload} />
 
             {image && (
-                <div
-                    ref={imageRef}
-                    style={{ position: 'relative', width: '100%', maxWidth: '800px', marginTop: '20px' }}
-                >
-                    <img src={image} alt="uploaded" style={{ width: '100%', height: 'auto' }} />
+                <>
+                    <div className='pt-4'>
+                        <h3 className='text-lg font-medium pb-2'>Place columns on the image</h3>
+                        <div className='flex gap-2 flex-wrap'>
 
-                    {textPositions.map((text, index) => (
-                        <Draggable
-                            key={text.id}
-                            position={{ x: text.x, y: text.y }}
-                            onStop={(e, data) =>
-                                updateTextPosition(text.id, { x: data.x, y: data.y })
-                            }
-                        >
-                            <div
-                                style={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    color: text.color,
-                                    fontSize: `${text.fontSize}px`,
-                                    fontWeight: text.fontWeight,
-                                    fontStyle: text.fontStyle,
-                                    backgroundColor: text.backgroundColor,
-                                    fontFamily: text.fontFamily === 'custom' ? customFontName || "customFont" : text.fontFamily,
-                                    padding: '2px 4px',
-                                    cursor: 'move',
-                                }}
+                            {columns.map((column, index) => (
+                                <Button key={index} onClick={() => addText(column)}>
+                                    <Plus size={15} />
+                                    <span className='pl-2'> {column}</span>
+                                </Button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div style={{ marginTop: '20px' }}>
+                        <h3 className='text-lg font-medium pb-2'>Upload Custom Font</h3>
+                        <Input className='w-fit' type="file" accept=".ttf,.otf,.woff" onChange={handleFontUpload} />
+                    </div>
+                    <div
+                        ref={imageRef}
+                        style={{ position: 'relative', width: '100%', maxWidth: '800px', marginTop: '20px' }}
+                    >
+                        <img src={image} alt="uploaded" style={{ width: '100%', height: 'auto' }} />
+
+                        {textPositions.map((text) => (
+                            <Draggable
+                                key={text.id}
+                                position={{ x: text.x, y: text.y }}
+                                onStop={(e, data) =>
+                                    updateTextPosition(text.id, { x: data.x, y: data.y })
+                                }
                             >
-                                {text.column}
-                            </div>
-                        </Draggable>
-                    ))}
-                </div>
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        color: text.color,
+                                        fontSize: `${text.fontSize}px`,
+                                        fontWeight: text.fontWeight,
+                                        fontStyle: text.fontStyle,
+                                        backgroundColor: text.backgroundColor,
+                                        fontFamily: text.fontFamily === 'custom' ? customFontName || "customFont" : text.fontFamily,
+                                        padding: '2px 4px',
+                                        cursor: 'move',
+                                    }}
+                                >
+                                    {text.column}
+                                </div>
+                            </Draggable>
+                        ))}
+                    </div>
+                </>
             )}
 
             {textPositions.length > 0 && (
-                <div style={{ marginTop: '20px' }}>
-                    <h3>Customize Text</h3>
-                    {textPositions.map((text) => (
-                        <div key={text.id} style={{ marginBottom: '10px' }}>
-                            <h4>{text.column}</h4>
-                            <label>
-                                Color:
-                                <input
-                                    type="color"
-                                    value={text.color}
-                                    onChange={(e) => updateTextPosition(text.id, { color: e.target.value })}
-                                />
-                            </label>
-                            <label>
-                                Background Color:
-                                <input
-                                    type="color"
-                                    value={text.backgroundColor}
-                                    onChange={(e) => updateTextPosition(text.id, { backgroundColor: e.target.value })}
-                                />
-                            </label>
-                            <label>
-                                Font Size:
-                                <input
-                                    type="number"
-                                    value={text.fontSize}
-                                    onChange={(e) => updateTextPosition(text.id, { fontSize: parseInt(e.target.value) })}
-                                />
-                            </label>
-                            <label>
-                                Font Weight:
-                                <select
-                                    value={text.fontWeight}
-                                    onChange={(e) => updateTextPosition(text.id, { fontWeight: e.target.value })}
-                                >
-                                    <option value="normal">Normal</option>
-                                    <option value="bold">Bold</option>
-                                </select>
-                            </label>
-                            <label>
-                                Font Style:
-                                <select
-                                    value={text.fontStyle}
-                                    onChange={(e) => updateTextPosition(text.id, { fontStyle: e.target.value })}
-                                >
-                                    <option value="normal">Normal</option>
-                                    <option value="italic">Italic</option>
-                                </select>
-                            </label>
-                            <label>
-                                Font Family:
-                                <select
-                                    value={text.fontFamily}
-                                    onChange={(e) => updateTextPosition(text.id, { fontFamily: e.target.value })}
-                                >
-                                    <option value="Arial">Arial</option>
-                                    <option value="Times New Roman">Times New Roman</option>
-                                    <option value="Courier New">Courier New</option>
-                                    {customFontName && <option value="custom">{customFontName}</option>}
-                                </select>
-                            </label>
+                <div className='pt-4'>
+                    <h3 className='text-lg font-medium pb-2'>Customize Text</h3>
+                    {textPositions.map((text, ind) => (
+                        <div key={text.id} className=''>
+                            <h4 className='font-medium'>{ind + 1}. {text.column}</h4>
+                            <div className='flex gap-2'>
+                                <Label className='flex items-center gap-2'>
+                                    Color:
+                                    <Input
+                                        className='w-16'
+                                        type="color"
+                                        value={text.color}
+                                        onChange={(e) => updateTextPosition(text.id, { color: e.target.value })}
+                                    />
+                                </Label>
+                                <Label className='flex items-center gap-2'>
+                                    BG Color:
+                                    <Input
+                                        className='w-16'
+                                        type="color"
+                                        value={text.backgroundColor}
+                                        onChange={(e) => updateTextPosition(text.id, { backgroundColor: e.target.value })}
+                                    />
+                                    {textPositions[text.id].backgroundColor !== "transparent" && <Button className='text-xs p-2' onClick={() => updateTextPosition(text.id, { backgroundColor: 'transparent' })}>Clear BG</Button>}
+                                </Label>
+                                <Label className='flex items-center gap-2'>
+                                    Font Size:
+                                    <Input
+                                        className='min-w-16 w-fit'
+                                        type="number"
+                                        value={text.fontSize}
+                                        onChange={(e) => updateTextPosition(text.id, { fontSize: parseInt(e.target.value) })}
+                                    />
+                                </Label>
+                                <Label className='flex items-center gap-2'>
+                                    Font Weight:
+                                    <Select
+                                        value={text.fontWeight}
+                                        onValueChange={(v) => updateTextPosition(text.id, { fontWeight: v })}
+                                    >
+                                        <SelectTrigger className="w-[100px]">
+                                            <SelectValue placeholder="Font Weight" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="normal">Normal</SelectItem>
+                                            <SelectItem value="bold">Bold</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </Label>
+                                <Label className='flex items-center gap-2'>
+                                    Font Style:
+                                    <Select
+                                        value={text.fontStyle}
+                                        onValueChange={(v) => updateTextPosition(text.id, { fontStyle: v })}
+                                    >
+                                        <SelectTrigger className="w-[100px]">
+                                            <SelectValue placeholder="Font Style" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="normal">Normal</SelectItem>
+                                            <SelectItem value="italic">Italic</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </Label>
+                                <Label className='flex items-center gap-2'>
+                                    Font Family:
+                                    <Select
+                                        value={text.fontFamily}
+                                        onValueChange={(v) => updateTextPosition(text.id, { fontFamily: v })}
+                                    >
+                                        <SelectTrigger className="w-[180px]">
+                                            <SelectValue placeholder="Font Family" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Arial">Arial</SelectItem>
+                                            <SelectItem value="Times New Roman">Times New Roman</SelectItem>
+                                            <SelectItem value="Courier New">Courier New</SelectItem>
+                                            {customFontName && <SelectItem value="custom">{customFontName}</SelectItem>}
+                                        </SelectContent>
+                                    </Select>
+                                </Label>
+                            </div>
                         </div>
                     ))}
                 </div>
             )}
 
-            <button onClick={handleExport} style={{ marginTop: '20px' }}>
-                Export Images with Data
-            </button>
-            <FormComponent columns={columns} tableData={tableData} textPositions={textPositions} imageRef={imageRef} setTextPositions={setTextPositions} />
+
+            {image &&
+                <div className='flex justify-end'>
+                    <Button variant="outline" onClick={handleExport} className='mt-4'>
+                        Export Images
+                    </Button>
+                </div>}
         </div>
     );
 };
 
-export default ImageOverlay;
+export default ImageEditor;
