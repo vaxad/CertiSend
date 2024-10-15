@@ -16,6 +16,8 @@ const FormComponent = ({ columns, tableData, textPositions, imageRef, setTextPos
     const [senderPassword, setSenderPassword] = useState('');
 
     const handleSendMail = async () => {
+        const generatedImages: { email: string; dataUrl: string }[] = [];
+
         for (const row of tableData) {
             const updatedTextPositions = textPositions.map((text) => ({
                 ...text,
@@ -27,8 +29,18 @@ const FormComponent = ({ columns, tableData, textPositions, imageRef, setTextPos
             if (imageRef.current) {
                 const dataUrl = await htmlToImage.toPng(imageRef.current);
 
-                setTextPositions(textPositions);
+                generatedImages.push({
+                    email: row.email,
+                    dataUrl,
+                });
+            }
 
+            setTextPositions(textPositions);
+        }
+
+        for (const row of tableData) {
+            const imageInfo = generatedImages.find((img) => img.email === row.email);
+            if (imageInfo) {
                 let replacedSubject = subject;
                 let replacedBody = body;
 
@@ -47,7 +59,7 @@ const FormComponent = ({ columns, tableData, textPositions, imageRef, setTextPos
                     attachments: [
                         {
                             filename: `image-${row.email}.png`,
-                            content: dataUrl.split(',')[1],
+                            content: imageInfo.dataUrl.split(',')[1],
                         },
                     ],
                 };
@@ -56,6 +68,7 @@ const FormComponent = ({ columns, tableData, textPositions, imageRef, setTextPos
             }
         }
     };
+
 
     const sendMail = async (mailRequestBody: MailRequestBody) => {
         try {

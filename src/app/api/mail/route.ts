@@ -16,12 +16,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Sender mail and app password are required.' }, { status: 400 });
     }
 
-    // Create a Nodemailer transporter object
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: email,
-        pass: password, // Use the app password for Gmail
+        pass: password,
       },
     });
 

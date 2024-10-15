@@ -46,7 +46,7 @@ export default function TableData({ columns, setColumns, setTableData, tableData
         <div className='pt-6'>
             <h1 className='text-2xl font-bold'>Send Certificates</h1>
 
-            <div className='flex justify-between pt-6'>
+            <div className='flex md:flex-row flex-col w-full items-center justify-between pt-6'>
                 <h2 className='text-xl font-semibold'>Manual Data Entry</h2>
                 <h3 className='text-xl font-bold'>OR</h3>
                 <Input className='w-fit' placeholder='Upload CSV' type="file" accept=".csv" onChange={handleFileUpload} />

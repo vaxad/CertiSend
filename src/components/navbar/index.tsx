@@ -15,10 +15,6 @@ export default function Navbar() {
             name: "Send",
             href: "/send"
         },
-        // {
-        //     name: "Docs",
-        //     href: "/docs"
-        // },
         {
             name: "Contact",
             href: "https://www.varad.xyz/contact"

@@ -163,7 +163,7 @@ const ImageEditor = ({ columns, tableData, image, imageRef, setImage, setTextPos
                     {textPositions.map((text, ind) => (
                         <div key={text.id} className=''>
                             <h4 className='font-medium'>{ind + 1}. {text.column}</h4>
-                            <div className='flex gap-2'>
+                            <div className='flex md:flex-row flex-col flex-wrap gap-2'>
                                 <Label className='flex items-center gap-2'>
                                     Color:
                                     <Input
