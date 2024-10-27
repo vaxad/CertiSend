@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import * as htmlToImage from 'html-to-image';
 import { FormProps } from '@/lib/types/form';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
@@ -7,35 +6,55 @@ import { Textarea } from '../ui/textarea';
 import { Button } from '../ui/button';
 import { toast } from 'sonner';
 import { MailRequestBody } from '@/lib/types/mail';
+import { Info } from 'lucide-react';
 
 
-const FormComponent = ({ columns, tableData, textPositions, imageRef, setTextPositions }: FormProps) => {
-    const [subject, setSubject] = useState('');
-    const [body, setBody] = useState('');
-    const [senderMail, setSenderMail] = useState('');
-    const [senderPassword, setSenderPassword] = useState('');
+const FormComponent = ({ columns, tableData, textPositions, imageRef, image }: FormProps) => {
+    const [subject, setSubject] = useState('hii ${name}');
+    const [body, setBody] = useState('test');
+    const [senderMail, setSenderMail] = useState('testvaxad@gmail.com');
+    const [senderPassword, setSenderPassword] = useState('efhe haho lyve gxox');
 
     const handleSendMail = async () => {
         const generatedImages: { email: string; dataUrl: string }[] = [];
 
         for (const row of tableData) {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            if (!ctx) return;
+
+            canvas.width = imageRef.current?.clientWidth || 500;
+            canvas.height = imageRef.current?.clientHeight || 500;
+
+            if (image) {
+                const baseImage = new Image();
+                baseImage.src = image
+                await new Promise((resolve) => {
+                    baseImage.onload = () => {
+                        ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
+                        resolve(true);
+                    };
+                });
+            }
+
             const updatedTextPositions = textPositions.map((text) => ({
                 ...text,
                 column: row[text.column],
             }));
 
-            setTextPositions(updatedTextPositions);
+            updatedTextPositions.forEach((text) => {
+                ctx.font = `${text.fontWeight} ${text.fontSize}px ${text.fontFamily}`;
+                ctx.fillStyle = text.color;
+                ctx.textAlign = "left";
+                ctx.fillText(text.column, text.x, text.y);
+            });
 
-            if (imageRef.current) {
-                const dataUrl = await htmlToImage.toPng(imageRef.current);
+            const dataUrl = canvas.toDataURL("image/png");
 
-                generatedImages.push({
-                    email: row.email,
-                    dataUrl,
-                });
-            }
-
-            setTextPositions(textPositions);
+            generatedImages.push({
+                email: row.email,
+                dataUrl,
+            });
         }
 
         for (const row of tableData) {
@@ -68,7 +87,6 @@ const FormComponent = ({ columns, tableData, textPositions, imageRef, setTextPos
             }
         }
     };
-
 
     const sendMail = async (mailRequestBody: MailRequestBody) => {
         try {
@@ -108,7 +126,7 @@ const FormComponent = ({ columns, tableData, textPositions, imageRef, setTextPos
                 />
             </div>
             <div>
-                <Label>Sender Email:</Label>
+                <Label>Sender Gmail:</Label>
                 <Input
                     type="email"
                     value={senderMail}
@@ -125,6 +143,10 @@ const FormComponent = ({ columns, tableData, textPositions, imageRef, setTextPos
                     placeholder="Enter your app password"
                 />
             </div>
+            <a href='https://support.google.com/accounts/answer/185833' className='flex items-center gap-2 p-2 bg-foreground/10 rounded-md'>
+                <Info size={16} />
+                <h2 className='text-sm'>Get more information about app passwords</h2>
+            </a>
             <Button className='mt-4' onClick={handleSendMail}>Send Mail</Button>
         </div>
     );

@@ -5,12 +5,12 @@ import * as htmlToImage from 'html-to-image';
 import { ImageEditorProps, TextPosition } from '@/lib/types/image';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
-import { Plus } from 'lucide-react';
+import { Cross, Plus, Trash, Trash2 } from 'lucide-react';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 const ImageEditor = ({ columns, tableData, image, imageRef, setImage, setTextPositions, textPositions }: ImageEditorProps) => {
-    const [customFontName, setCustomFontName] = useState<string | null>(null);
+    const [customFontNames, setCustomFontNames] = useState<string[]>([]);
     const styleSheetRef = useRef<HTMLStyleElement | null>(null);
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,13 +38,13 @@ const ImageEditor = ({ columns, tableData, image, imageRef, setImage, setTextPos
                 }
 
                 const styleSheet = styleSheetRef.current!;
-                styleSheet.innerHTML = `
+                styleSheet.innerHTML += `
           @font-face {
             font-family: '${fontName}';
             src: url(${fontBase64}) format('truetype');
           }
         `;
-                setCustomFontName(fontName);
+                setCustomFontNames((prev) => [...prev, fontName]);
             };
             reader.readAsDataURL(e.target.files[0]);
         }
@@ -75,26 +75,59 @@ const ImageEditor = ({ columns, tableData, image, imageRef, setImage, setTextPos
     };
 
     const handleExport = async () => {
-        if (!imageRef.current) return;
+        const generatedImages = [];
 
         for (const row of tableData) {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            if (!ctx) return;
+
+            canvas.width = imageRef.current?.clientWidth || 500;
+            canvas.height = imageRef.current?.clientHeight || 500;
+
+            if (image) {
+                const baseImage = new Image();
+                baseImage.src = image;
+                await new Promise((resolve) => {
+                    baseImage.onload = () => {
+                        ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
+                        resolve(true);
+                    };
+                });
+            }
+
             const updatedTextPositions = textPositions.map((text) => ({
                 ...text,
                 column: row[text.column],
             }));
 
-            setTextPositions(updatedTextPositions);
+            updatedTextPositions.forEach((text) => {
+                ctx.font = `${text.fontWeight} ${text.fontSize}px ${text.fontFamily}`;
+                ctx.fillStyle = text.color;
+                ctx.textAlign = "left";
+                ctx.fillText(text.column, text.x, text.y);
+            });
 
-            const dataUrl = await htmlToImage.toPng(imageRef.current);
+            const dataUrl = canvas.toDataURL("image/png");
 
-            setTextPositions(textPositions);
-
-            const link = document.createElement('a');
-            link.href = dataUrl;
-            link.download = `image-${row.email}.png`;
-            link.click();
+            generatedImages.push({
+                email: row.email,
+                dataUrl,
+            });
         }
+
+        generatedImages.forEach((imageInfo) => {
+            const link = document.createElement('a');
+            link.href = imageInfo.dataUrl;
+            link.download = `image-${imageInfo.email}.png`;
+            link.click();
+        });
     };
+
+
+    const handleFontRemoval = (index: number) => {
+        setCustomFontNames((prev) => prev.filter((_, i) => i !== index));
+    }
 
     return (
         <div>
@@ -119,6 +152,9 @@ const ImageEditor = ({ columns, tableData, image, imageRef, setImage, setTextPos
                     <div style={{ marginTop: '20px' }}>
                         <h3 className='text-lg font-medium pb-2'>Upload Custom Font</h3>
                         <Input className='w-fit' type="file" accept=".ttf,.otf,.woff" onChange={handleFontUpload} />
+                        <div className='flex flex-wrap gap-4 pt-4'>
+                            {customFontNames.map((font, index) => (<button key={index} onClick={() => handleFontRemoval(index)} className='p-2 bg-foreground text-background rounded-lg w-fit text-xs flex items-center'>{font} <Trash size={14} /></button>))}
+                        </div>
                     </div>
                     <div
                         ref={imageRef}
@@ -144,7 +180,7 @@ const ImageEditor = ({ columns, tableData, image, imageRef, setImage, setTextPos
                                         fontWeight: text.fontWeight,
                                         fontStyle: text.fontStyle,
                                         backgroundColor: text.backgroundColor,
-                                        fontFamily: text.fontFamily === 'custom' ? customFontName || "customFont" : text.fontFamily,
+                                        fontFamily: text.fontFamily,
                                         padding: '2px 4px',
                                         cursor: 'move',
                                     }}
@@ -235,10 +271,16 @@ const ImageEditor = ({ columns, tableData, image, imageRef, setImage, setTextPos
                                             <SelectItem value="Arial">Arial</SelectItem>
                                             <SelectItem value="Times New Roman">Times New Roman</SelectItem>
                                             <SelectItem value="Courier New">Courier New</SelectItem>
-                                            {customFontName && <SelectItem value="custom">{customFontName}</SelectItem>}
+                                            {customFontNames.map((item, idx) =>
+                                                <SelectItem key={idx} value={item}>{item}</SelectItem>
+                                            )}
                                         </SelectContent>
                                     </Select>
                                 </Label>
+                                <Button onClick={() => setTextPositions((prev) => prev.filter((t, i) => i != ind))}>
+                                    <Trash2 size={15} />
+                                </Button>
+
                             </div>
                         </div>
                     ))}

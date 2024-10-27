@@ -13,7 +13,8 @@ export async function POST(req: NextRequest) {
     const password = senderPassword || ENV_PASSWORD;
 
     if (!email || !password) {
-      return NextResponse.json({ error: 'Sender mail and app password are required.' }, { status: 400 });
+      // return NextResponse.json({ error: 'Sender mail and app password are required.' }, { status: 400 });
+      console.error('Sender mail and app password are required.');
     }
 
     const transporter = nodemailer.createTransport({

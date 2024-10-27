@@ -6,5 +6,5 @@ export interface FormProps {
     tableData: TableRow[];
     textPositions: TextPosition[];
     imageRef: React.RefObject<HTMLDivElement>;
-    setTextPositions: React.Dispatch<React.SetStateAction<TextPosition[]>>
+    image: string | null;
 };

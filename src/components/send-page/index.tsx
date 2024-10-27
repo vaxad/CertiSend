@@ -20,7 +20,7 @@ export default function SendPage() {
             <Separator className='my-2' />
             <ImageEditor columns={columns} image={image} imageRef={imageRef} setImage={setImage} setTextPositions={setTextPositions} tableData={tableData} textPositions={textPositions} />
             <Separator className='my-2' />
-            <FormComponent columns={columns} imageRef={imageRef} tableData={tableData} textPositions={textPositions} setTextPositions={setTextPositions} />
+            <FormComponent image={image} columns={columns} imageRef={imageRef} tableData={tableData} textPositions={textPositions} />
         </main>
     )
 }
