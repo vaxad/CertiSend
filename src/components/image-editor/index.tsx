@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useRef } from 'react';
 import Draggable from 'react-draggable';
-import * as htmlToImage from 'html-to-image';
 import { ImageEditorProps, TextPosition } from '@/lib/types/image';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
-import { Cross, Plus, Trash, Trash2 } from 'lucide-react';
+import { Plus, Trash, Trash2 } from 'lucide-react';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
